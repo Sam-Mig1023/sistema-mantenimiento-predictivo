@@ -1,0 +1,193 @@
+/* ==========================================================================
+   ESTILOS PREMIUM STREAMLIT - SISTEMA DE MANTENIMIENTO PREDICTIVO (UNT IS-402)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Encabezados y títulos */
+h1, h2, h3 {
+    font-weight: 700 !important;
+    letter-spacing: -0.025em;
+}
+
+h1 { color: #1e3a8a !important; }
+h2 { color: #1e293b !important; }
+h3 { color: #334155 !important; }
+
+/* Contenedor principal y espaciado */
+.block-container {
+    padding-top: 2rem !important;
+    padding-bottom: 3rem !important;
+    max-width: 1400px;
+}
+
+/* Sidebar institucional minero */
+section[data-testid="stSidebar"] {
+    background-color: #0f172a !important;
+    border-right: 1px solid #1e293b;
+}
+
+section[data-testid="stSidebar"] * {
+    color: #e2e8f0 !important;
+}
+
+section[data-testid="stSidebar"] h3, 
+section[data-testid="stSidebar"] h4 {
+    color: #38bdf8 !important;
+    font-weight: 700 !important;
+}
+
+section[data-testid="stSidebar"] hr {
+    border-color: #334155 !important;
+}
+
+section[data-testid="stSidebar"] .stRadio label {
+    font-weight: 500 !important;
+    padding: 6px 10px !important;
+    border-radius: 6px !important;
+    transition: all 0.2s ease;
+}
+
+section[data-testid="stSidebar"] .stRadio label:hover {
+    background-color: rgba(56, 189, 248, 0.1) !important;
+}
+
+/* Tarjetas métricas (st.metric) */
+div[data-testid="stMetric"] {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    border: 1px solid #e2e8f0;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+div[data-testid="stMetric"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+div[data-testid="stMetricLabel"] {
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+div[data-testid="stMetricValue"] {
+    font-size: 1.875rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+}
+
+/* Pestañas (Tabs) */
+div[data-baseweb="tab-list"] {
+    border-bottom: 2px solid #e2e8f0;
+    gap: 8px;
+}
+
+button[data-baseweb="tab"] {
+    font-weight: 600 !important;
+    font-size: 0.925rem !important;
+    color: #64748b !important;
+    padding: 10px 18px !important;
+    border-radius: 8px 8px 0 0 !important;
+    transition: all 0.2s ease !important;
+}
+
+button[data-baseweb="tab"][aria-selected="true"] {
+    color: #1e3a8a !important;
+    border-bottom: 3px solid #1e3a8a !important;
+    background-color: #f1f5f9 !important;
+}
+
+/* Botones principales y secundarios */
+button[kind="primary"] {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    border: none !important;
+    padding: 8px 20px !important;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25) !important;
+    transition: all 0.2s ease !important;
+}
+
+button[kind="primary"]:hover {
+    background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%) !important;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35) !important;
+    transform: translateY(-1px);
+}
+
+button[kind="secondary"] {
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+}
+
+/* Tablas y DataFrames */
+div[data-testid="stDataFrame"] {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* Alertas y Callouts */
+div[data-testid="stAlert"] {
+    border-radius: 10px !important;
+    border-left-width: 5px !important;
+    font-weight: 500;
+}
+
+/* Badges personalizados de estado */
+.badge-operativo {
+    background-color: #dcfce7;
+    color: #166534;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.badge-mantenimiento {
+    background-color: #fef3c7;
+    color: #92400e;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.badge-critico {
+    background-color: #fee2e2;
+    color: #991b1b;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.badge-desactivado {
+    background-color: #f1f5f9;
+    color: #475569;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Tarjeta informativa personalizada */
+.predictive-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    margin-bottom: 16px;
+}

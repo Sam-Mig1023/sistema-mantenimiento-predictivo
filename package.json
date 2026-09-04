@@ -1,0 +1,11 @@
+{
+  "name": "sistema-mantenimiento-predictivo-unt",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Sistema de Mantenimiento Predictivo con Inteligencia Artificial - UNT IS-402 (Streamlit + Python)",
+  "scripts": {
+    "dev": "streamlit run app.py",
+    "start": "streamlit run app.py",
+    "test": "pytest tests/ -v"
+  }
+}

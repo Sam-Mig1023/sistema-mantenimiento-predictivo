@@ -1,0 +1,6 @@
+{
+  "name": "Sistema de Mantenimiento Predictivo",
+  "description": "Sistema de mantenimiento predictivo para equipos industriales de minería peruana aplicando CRISP-DM con Python, Streamlit, PostgreSQL e Inteligencia Artificial (UNT IS-402).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

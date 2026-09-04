@@ -1,0 +1,29 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# Python & Streamlit
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.streamlit/secrets.toml
+
+# Modelos entrenados pesados
+models/*.joblib
+models/*.keras
+models/*.h5
+
+# Reportes generados
+reports/pdf/*
+reports/word/*
+reports/excel/*
+!reports/pdf/.gitkeep
+!reports/word/.gitkeep
+!reports/excel/.gitkeep
+
