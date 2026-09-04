@@ -338,12 +338,41 @@ def soft_delete_usuario(id_usuario: int, admin_id: int) -> bool:
 # REPORTES Y PREDICCIONES
 # -------------------------------------------------------------
 def registrar_reporte_generado(reporte_data: Dict[str, Any]) -> int:
-    """Registra metadatos de un reporte generado en disco."""
+    """Registra metadatos de un reporte generado en disco y BD."""
     rep_id = len(_MEMORY_DB["reporte_generado"]) + 1
     reporte_data["id_reporte"] = rep_id
     reporte_data["fecha_generacion"] = datetime.now()
     reporte_data["veces_descargado"] = 0
     _MEMORY_DB["reporte_generado"].append(reporte_data)
+
+    manager = get_db_manager()
+    if manager.is_connected:
+        try:
+            with manager.get_connection() as conn:
+                if conn:
+                    with conn.cursor() as cur:
+                        cur.execute("""
+                            INSERT INTO reporte_generado (
+                                id_reporte, id_usuario, nombre_reporte, tipo_reporte,
+                                formato_archivo, ruta_archivo, tamano_bytes,
+                                fecha_generacion, veces_descargado, estado_reporte
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            ON CONFLICT (id_reporte) DO NOTHING;
+                        """, (
+                            rep_id,
+                            reporte_data.get("id_usuario_genero", 1),
+                            reporte_data.get("nombre_reporte", "Reporte"),
+                            reporte_data.get("tipo_reporte", "General"),
+                            reporte_data.get("formato", "pdf"),
+                            reporte_data.get("ruta_archivo", ""),
+                            reporte_data.get("tamano_bytes", 0),
+                            datetime.now(),
+                            0,
+                            "Generado"
+                        ))
+                        conn.commit()
+        except Exception as e:
+            logger.warning(f"Aviso al guardar reporte_generado en PostgreSQL: {e}")
     return rep_id
 
 def registrar_prediccion(pred_data: Dict[str, Any]) -> int:
