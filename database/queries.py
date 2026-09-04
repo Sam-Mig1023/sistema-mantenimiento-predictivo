@@ -71,6 +71,40 @@ def seed_initial_users():
 
 seed_initial_users()
 
+def seed_initial_equipos():
+    """Siembra los equipos iniciales en PostgreSQL si la tabla está vacía."""
+    manager = get_db_manager()
+    if manager.is_connected:
+        try:
+            with manager.get_connection() as conn:
+                if conn:
+                    with conn.cursor() as cur:
+                        cur.execute("SELECT COUNT(*) FROM equipo;")
+                        count = cur.fetchone()[0]
+                        if count == 0 and _MEMORY_DB.get("equipo"):
+                            for eq in _MEMORY_DB["equipo"]:
+                                cur.execute("""
+                                    INSERT INTO equipo (
+                                        id_equipo, id_tipo_equipo, codigo_equipo, nombre_equipo,
+                                        marca, modelo, ano_fabricacion, numero_serie,
+                                        horas_operacion, ubicacion_actual, fecha_instalacion,
+                                        estado_operativo
+                                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                    ON CONFLICT (id_equipo) DO NOTHING;
+                                """, (
+                                    eq["id_equipo"], eq["id_tipo_equipo"], eq["codigo_equipo"], eq["nombre_equipo"],
+                                    eq.get("marca", ""), eq.get("modelo", ""), eq.get("ano_fabricacion", 2022),
+                                    eq.get("numero_serie", ""), eq.get("horas_operacion", 0),
+                                    eq.get("ubicacion_actual", "Tajo Abierto"), eq.get("fecha_instalacion"),
+                                    eq.get("estado_operativo", "Operativo")
+                                ))
+                            conn.commit()
+                            logger.info("Equipos iniciales sembrados en PostgreSQL correctamente.")
+        except Exception as e:
+            logger.warning(f"Aviso al sembrar equipos en PostgreSQL: {e}")
+
+seed_initial_equipos()
+
 
 # -------------------------------------------------------------
 # AUDITORÍA Y BITÁCORA
@@ -123,7 +157,9 @@ def get_equipos(incluir_desactivados: bool = False) -> List[Dict[str, Any]]:
                             query += " WHERE estado_operativo != 'Desactivado'"
                         cur.execute(query)
                         cols = [desc[0] for desc in cur.description]
-                        return [dict(zip(cols, row)) for row in cur.fetchall()]
+                        rows = cur.fetchall()
+                        if rows:
+                            return [dict(zip(cols, row)) for row in rows]
         except Exception as e:
             logger.error(f"Error en vista_equipos_completos: {e}")
 

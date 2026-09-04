@@ -38,6 +38,46 @@ from database.queries import (
 )
 from auth.authentication import AuthManager
 
+COLUMNAS_REPORTES = {
+    "Estado General de Flota y Activos": [
+        "codigo_equipo", "nombre_equipo", "tipo_equipo", "marca",
+        "modelo", "horas_operacion", "estado_operativo", "ubicacion_actual"
+    ],
+    "Modelos de IA y Evaluación CRISP-DM": [
+        "Modelo", "Fase CRISP-DM", "Exactitud (Accuracy)", "F1-Score", "ROC-AUC", "Estado"
+    ],
+    "Historial de Fallas y Reparaciones": [
+        "id_falla", "id_equipo", "tipo_falla", "severidad",
+        "descripcion_falla", "tiempo_inactividad_minutos", "costo_reparacion", "estado_falla"
+    ],
+    "Indicadores Operacionales y KPIs Mineros": [
+        "id_equipo", "periodo", "disponibilidad", "utilizacion",
+        "mtbf_horas", "mttr_horas", "oee", "costo_mantenimiento"
+    ],
+    "Alertas y Eventos Críticos": [
+        "id_alerta", "id_equipo", "tipo_alerta", "nivel_gravedad",
+        "mensaje_alerta", "estado_alerta", "fecha_generacion"
+    ]
+}
+
+def safe_report_dataframe(raw_data, target_columns: list) -> pd.DataFrame:
+    """
+    Construye un DataFrame asegurando que nunca lance KeyError, 
+    incluso si raw_data es None, una lista vacía [], o faltan columnas esperadas.
+    """
+    if isinstance(raw_data, pd.DataFrame):
+        df = raw_data.copy()
+    elif not raw_data:
+        return pd.DataFrame(columns=target_columns)
+    else:
+        df = pd.DataFrame(raw_data)
+
+    for col in target_columns:
+        if col not in df.columns:
+            df[col] = "N/A"
+
+    return df[target_columns]
+
 def generate_excel_report(report_type: str, data: pd.DataFrame) -> bytes:
     """Genera un archivo Excel profesional con openpyxl con estilos corporativos UNT."""
     output = io.BytesIO()
@@ -74,17 +114,22 @@ def generate_excel_report(report_type: str, data: pd.DataFrame) -> bytes:
         cell.alignment = Alignment(horizontal="center", vertical="center")
 
     # Filas de datos
-    for r_idx, row in enumerate(data.itertuples(index=False), start=start_row + 1):
-        for c_idx, val in enumerate(row, start=1):
-            cell = ws.cell(row=r_idx, column=c_idx, value=val if pd.notnull(val) else "")
-            cell.border = border_thin
-            cell.alignment = Alignment(vertical="center")
+    if data.empty:
+        ws.cell(row=start_row + 1, column=1, value="Sin registros registrados en el sistema.")
+        ws.cell(row=start_row + 1, column=1).font = Font(name="Calibri", size=10, italic=True, color="64748B")
+    else:
+        for r_idx, row in enumerate(data.itertuples(index=False), start=start_row + 1):
+            for c_idx, val in enumerate(row, start=1):
+                cell = ws.cell(row=r_idx, column=c_idx, value=val if pd.notnull(val) else "")
+                cell.border = border_thin
+                cell.alignment = Alignment(vertical="center")
 
     # Auto-ajuste de columnas
     for col in ws.columns:
-        max_len = max(len(str(cell.value or '')) for cell in col)
+        vals = [str(cell.value or '') for cell in col]
+        max_len = max([len(v) for v in vals], default=10) if vals else 10
         col_letter = openpyxl.utils.get_column_letter(col[0].column)
-        ws.column_dimensions[col_letter].width = max(max_len + 3, 12)
+        ws.column_dimensions[col_letter].width = max(max_len + 3, 14)
 
     wb.save(output)
     return output.getvalue()
@@ -159,15 +204,21 @@ def generate_pdf_report(report_type: str, data: pd.DataFrame) -> bytes:
     ]
 
     # Calcular ancho dinámico por columna (ancho útil: 720 puntos)
-    num_cols = len(data.columns)
-    col_width = 720.0 / max(num_cols, 1)
+    num_cols = max(len(data.columns), 1)
+    col_width = 720.0 / num_cols
 
     table_data = [[Paragraph(f"<b>{str(c).upper()}</b>", cell_h_style) for c in data.columns]]
-    for row in data.itertuples(index=False):
+    if data.empty:
         table_data.append([
-            Paragraph(str(val if pd.notnull(val) else "-"), cell_d_style)
-            for val in row
+            Paragraph("<i>Sin registros</i>", cell_d_style)
+            for _ in data.columns
         ])
+    else:
+        for row in data.itertuples(index=False):
+            table_data.append([
+                Paragraph(str(val if pd.notnull(val) else "-"), cell_d_style)
+                for val in row
+            ])
 
     t = Table(table_data, colWidths=[col_width] * num_cols)
     t_style = [
@@ -248,19 +299,24 @@ def generate_word_report(report_type: str, data: pd.DataFrame) -> bytes:
                 run.font.color.rgb = RGBColor(255, 255, 255)
 
     # Filas de datos con filas alternadas
-    for r_idx, row in enumerate(data.itertuples(index=False)):
+    if data.empty:
         r_cells = table.add_row().cells
-        shd_color = "F8FAFC" if r_idx % 2 == 0 else "FFFFFF"
-        for c_idx, val in enumerate(row):
-            cell = r_cells[c_idx]
-            cell.text = str(val if pd.notnull(val) else "-")
-            shading = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{shd_color}"/>')
-            cell._tc.get_or_add_tcPr().append(shading)
-            for p in cell.paragraphs:
-                for run in p.runs:
-                    run.font.name = 'Calibri'
-                    run.font.size = Pt(8.5)
-                    run.font.color.rgb = RGBColor(0x0F, 0x17, 0x2A)
+        for c_idx in range(len(data.columns)):
+            r_cells[c_idx].text = "Sin registros"
+    else:
+        for r_idx, row in enumerate(data.itertuples(index=False)):
+            r_cells = table.add_row().cells
+            shd_color = "F8FAFC" if r_idx % 2 == 0 else "FFFFFF"
+            for c_idx, val in enumerate(row):
+                cell = r_cells[c_idx]
+                cell.text = str(val if pd.notnull(val) else "-")
+                shading = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{shd_color}"/>')
+                cell._tc.get_or_add_tcPr().append(shading)
+                for p in cell.paragraphs:
+                    for run in p.runs:
+                        run.font.name = 'Calibri'
+                        run.font.size = Pt(8.5)
+                        run.font.color.rgb = RGBColor(0x0F, 0x17, 0x2A)
 
     output = io.BytesIO()
     doc.save(output)
@@ -299,20 +355,31 @@ def render_reportes():
     # Generación y previsualización de datos
     if tipo_reporte == "Estado General de Flota y Activos":
         equipos = get_equipos(incluir_desactivados=True)
-        df_export = pd.DataFrame(equipos)[["codigo_equipo", "nombre_equipo", "tipo_equipo", "marca", "modelo", "horas_operacion", "estado_operativo", "ubicacion_actual"]]
+        cols = COLUMNAS_REPORTES["Estado General de Flota y Activos"]
+        df_export = safe_report_dataframe(equipos, cols)
     elif tipo_reporte == "Modelos de IA y Evaluación CRISP-DM":
         from modules.ia_engine import PredictiveMaintenanceAIEngine
         engine = PredictiveMaintenanceAIEngine()
-        df_export = engine.get_models_comparison_table()
+        df_models = engine.get_models_comparison_table()
+        cols = COLUMNAS_REPORTES["Modelos de IA y Evaluación CRISP-DM"]
+        if set(cols).issubset(df_models.columns):
+            df_export = safe_report_dataframe(df_models, cols)
+        else:
+            df_export = df_models
     elif tipo_reporte == "Historial de Fallas y Reparaciones":
-        df_export = pd.DataFrame(_MEMORY_DB.get("falla", []))[["id_falla", "id_equipo", "tipo_falla", "severidad", "descripcion_falla", "tiempo_inactividad_minutos", "costo_reparacion", "estado_falla"]]
+        cols = COLUMNAS_REPORTES["Historial de Fallas y Reparaciones"]
+        df_export = safe_report_dataframe(_MEMORY_DB.get("falla", []), cols)
     elif tipo_reporte == "Indicadores Operacionales y KPIs Mineros":
-        df_export = pd.DataFrame(_MEMORY_DB.get("kpi_equipo", []))[["id_equipo", "periodo", "disponibilidad", "utilizacion", "mtbf_horas", "mttr_horas", "oee", "costo_mantenimiento"]]
+        cols = COLUMNAS_REPORTES["Indicadores Operacionales y KPIs Mineros"]
+        df_export = safe_report_dataframe(_MEMORY_DB.get("kpi_equipo", []), cols)
     else:
-        df_export = pd.DataFrame(get_alertas())[["id_alerta", "id_equipo", "tipo_alerta", "nivel_gravedad", "mensaje_alerta", "estado_alerta", "fecha_generacion"]]
+        cols = COLUMNAS_REPORTES["Alertas y Eventos Críticos"]
+        df_export = safe_report_dataframe(get_alertas(), cols)
 
     st.markdown("#### 👁️ Vista Previa del Conjunto de Datos")
-    st.dataframe(df_export.head(10), use_container_width=True, hide_index=True)
+    if df_export.empty:
+        st.info("ℹ️ Actualmente no existen registros en el sistema para este reporte. Se generará la estructura oficial con encabezados correspondientes.")
+    st.dataframe(df_export.head(15), use_container_width=True, hide_index=True)
 
     c_gen1, c_gen2 = st.columns([2, 4])
     with c_gen1:
